@@ -10,6 +10,27 @@ $ npm install
 
 The scanner connects to any Ethereum JSON-RPC endpoint: a local node via `--port` (and optionally `--client`), or a public provider such as Infura or Alchemy via `--url`.
 
+### Supported chains
+
+The scanner is not tied to Ethereum mainnet. It only uses standard Ethereum JSON-RPC methods (`eth_getBlockByNumber`, `eth_getTransactionByHash`, `eth_getTransactionReceipt`, `eth_getBalance`, `eth_getCode`), detects contract creation as a transaction without a `to` address, and matches queries against EVM bytecode. Any EVM-compatible chain exposing that RPC surface works; the chain is selected purely by the endpoint you pass:
+
+- Ethereum mainnet and testnets (Sepolia, Holesky)
+- EVM layer 2 networks (Arbitrum, Optimism, Base, Polygon PoS, Scroll, Linea)
+- other EVM chains (BNB Smart Chain, Avalanche C-Chain, Gnosis, Fantom)
+- local development nodes (Ganache, Hardhat, Anvil, a private geth)
+
+Unknown chain IDs are accepted; the network is simply reported as `unknown` at startup.
+
+```
+$ ./scanner --url https://arb1.arbitrum.io/rpc --block-start 200000000 --block-end 200000100 --query '<<transfer(address,uint256)>>'
+```
+
+Not supported: chains without Ethereum JSON-RPC and EVM bytecode (Bitcoin, Solana, Cosmos chains, Cardano, ...). Chains that expose an Ethereum-style RPC but run a different VM (for example zkSync Era) will connect, but hexadecimal bytecode patterns may not match because the compiled code differs.
+
+Limitations that apply on every chain:
+- only top-level contract creations are found; contracts deployed by factories or via `CREATE2` are internal transactions and are not detected;
+- the scanner uses ethers v4, which predates EIP-1559 (type-2 transactions); scanning recent blocks on chains that use them has not been extensively tested.
+
 ### Error handling
 
 Every RPC call made while scanning blocks is retried on failure, up to 5 attempts with exponential backoff (1s, 2s, 4s, 8s). Each retry is reported on stderr, for example:
