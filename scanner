@@ -289,6 +289,12 @@ async function main(commandLine)
                     let transaction = await rpcUtils.withRetry(
                         'block ' + currentBlock + ' getTransaction(' + transactionHash + ')',
                         () => networkState.provider.getTransaction(transactionHash));
+
+                    if (!transaction)
+                    {
+                        console.log('cannot retrieve transaction ' + transactionHash + ' from provider, skipping');
+                        continue;
+                    }
                     
                     if (searchParameters.verbose)
                     {
