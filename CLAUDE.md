@@ -12,17 +12,17 @@ npm install
 Run the scanner:
 ```
 # Local node (--port required if --url is not provided)
-./scanner --port <port> --block-start <block> --block-end <block> --query '<query>'
+./evmap --port <port> --block-start <block> --block-end <block> --query '<query>'
 
 # Public provider (Infura, Alchemy, etc.)
-./scanner --url https://mainnet.infura.io/v3/<key> --block-start <block> --block-end <block> --query '<query>'
+./evmap --url https://mainnet.infura.io/v3/<key> --block-start <block> --block-end <block> --query '<query>'
 ```
 
 `--delay <ms>` sets the pause between block iterations (default: 1000ms).
 
 `--on-match <command>` runs a shell command on each match. Use `{field}` tokens for substitution:
 ```
-./scanner ... --on-match 'echo {contractAddress} {blockNumber}'
+./evmap ... --on-match 'echo {contractAddress} {blockNumber}'
 ```
 Available tokens: `{blockNumber}`, `{transactionHash}`, `{contractAddress}`, `{ownerAddress}`, `{transactionNonce}`, `{transactionValue}`, `{contractBalance}`, `{transactionData}`, `{contractBytecode}`.
 
@@ -30,7 +30,7 @@ Each substituted value is wrapped in POSIX single quotes before the command is p
 
 `--action-script <file>` loads a JS module and calls its default export on each match:
 ```
-./scanner ... --action-script ./my-action.js
+./evmap ... --action-script ./my-action.js
 ```
 ```js
 // my-action.js
@@ -51,10 +51,10 @@ Other scanner options:
 - `--verbose` — print full transaction/receipt/bytecode data during the scan.
 - `--summary` — print a summary of all matches at the end (requires `--output-file`).
 
-Run the hex utility (generates function signatures/keccak256 hashes):
+Run the evmap-hex utility (generates function signatures/keccak256 hashes):
 ```
-./hex --input 'transfer(address,uint256)'
-./hex --input 'transfer(address,uint256)' --signature   # 4-byte selector only
+./evmap-hex --input 'transfer(address,uint256)'
+./evmap-hex --input 'transfer(address,uint256)' --signature   # 4-byte selector only
 ```
 
 Run the tests (dependency-free, Node `assert` only; covers the RPC retry helper):
@@ -64,11 +64,11 @@ npm test
 
 ## Architecture
 
-Two executable entry points (`scanner` and `hex`), both `#!/usr/bin/env node` scripts using `commander` for CLI parsing.
+Two executable entry points (`evmap` and `evmap-hex`), both `#!/usr/bin/env node` scripts using `commander` for CLI parsing. `package.json` exposes them as the `evmap` and `evmap-hex` commands via its `bin` field.
 
-**`scanner`** — the main tool. Iterates over a range of Ethereum blocks, finds contract-creation transactions (those with no `to` address), and matches their creation data or runtime bytecode against a user-supplied query expression.
+**`evmap`** — the main tool. Iterates over a range of Ethereum blocks, finds contract-creation transactions (those with no `to` address), and matches their creation data or runtime bytecode against a user-supplied query expression.
 
-**`hex`** — a small utility that computes `keccak256` hashes of ABI function signatures, used to generate the hex values that queries match against.
+**`evmap-hex`** — a small utility that computes `keccak256` hashes of ABI function signatures, used to generate the hex values that queries match against.
 
 ### Query language (`utils/search-utils.js`)
 
@@ -83,7 +83,7 @@ At evaluation time (`SearchUtils`):
 ### Data flow
 
 ```
-scanner CLI
+evmap CLI
   → validateCommandLine()       parses + validates args → SearchParameters
   → statusUtils.retrieveNetworkState()  connects via JsonRpcProvider
   → for each block:
@@ -111,7 +111,7 @@ scanner CLI
 
 ### Error handling
 
-Transient RPC failures (rate limits, timeouts, dropped connections) are handled per call by `rpcUtils.withRetry()` in the block loop. When retries are exhausted, or the endpoint is unreachable at startup, the error propagates out of `main()` to the single `.catch` at the bottom of `scanner`, which prints `scan aborted: <reason>` (naming the failing block), the output file path if any, the full error under `--verbose`, and sets exit code 1. `process.exitCode` is used rather than `process.exit()` so pending `--on-match` child processes can finish. The retry policy is intentionally not configurable from the command line.
+Transient RPC failures (rate limits, timeouts, dropped connections) are handled per call by `rpcUtils.withRetry()` in the block loop. When retries are exhausted, or the endpoint is unreachable at startup, the error propagates out of `main()` to the single `.catch` at the bottom of `evmap`, which prints `scan aborted: <reason>` (naming the failing block), the output file path if any, the full error under `--verbose`, and sets exit code 1. `process.exitCode` is used rather than `process.exit()` so pending `--on-match` child processes can finish. The retry policy is intentionally not configurable from the command line.
 
 ### Key dependencies
 

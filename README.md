@@ -1,9 +1,14 @@
-### Ethereum scanner
+### evm-scanner
 
-The ethereum scanner is a free and open-source tool for contract exploration and discovery. The scanner supports regular expression queries that allow discovery of smart contracts with complex EVM patterns.
+evm-scanner (npm package `evmap`) is a free and open-source tool for EVM smart contract exploration and discovery. The scanner supports regular expression queries that allow discovery of smart contracts with complex EVM patterns.
 
 ### Installation
 
+From npm, which provides the `evmap` and `evmap-hex` commands:
+```
+$ npm install -g evmap
+```
+From source (the examples below use the executables from the repository root):
 ```
 $ npm install
 ```
@@ -22,7 +27,7 @@ The scanner is not tied to Ethereum mainnet. It only uses standard Ethereum JSON
 Unknown chain IDs are accepted; the network is simply reported as `unknown` at startup.
 
 ```
-$ ./scanner --url https://arb1.arbitrum.io/rpc --block-start 200000000 --block-end 200000100 --query '<<transfer(address,uint256)>>'
+$ ./evmap --url https://arb1.arbitrum.io/rpc --block-start 200000000 --block-end 200000100 --query '<<transfer(address,uint256)>>'
 ```
 
 Not supported: chains without Ethereum JSON-RPC and EVM bytecode (Bitcoin, Solana, Cosmos chains, Cardano, ...). Chains that expose an Ethereum-style RPC but run a different VM (for example zkSync Era) will connect, but hexadecimal bytecode patterns may not match because the compiled code differs.
@@ -55,23 +60,23 @@ If using an ethereum client that does not run in full sync mode, there are some 
 Hence, the --block-end implicit value (the network block number) is not a valid block number, and the scan will fail. \
 Also, the --balance option will filter out contracts that might have a non-zero balance.
 
-### Command line examples for hex
+### Command line examples for evmap-hex
 
-The hex utility can be easily used to generate a function signature.
+The evmap-hex utility can be easily used to generate a function signature.
 
 ```
-$ ./hex --input 'transferFrom(address,address,uint256)'
+$ ./evmap-hex --input 'transferFrom(address,address,uint256)'
 hex       0x23b872dd7302113369cda2901243429419bec145408fa8b352b3dd92b66c680b
-$ ./hex --input 'transferFrom(address,address,uint256)' --signature
+$ ./evmap-hex --input 'transferFrom(address,address,uint256)' --signature
 hex       0x23b872dd
 ```
 
-### Command line examples for sc4nn3r
+### Command line examples for evmap
 
 The --help option displays the available scan options.
 ```
-$ ./scanner --help
-Usage: scanner [options]
+$ ./evmap --help
+Usage: evmap [options]
 
 Options:
   -V, --version           output the version number
@@ -96,31 +101,31 @@ Options:
 ```
 Simple scan using a function signature in the query.
 ```
-$ ./scanner --port 8545 --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>>'
+$ ./evmap --port 8545 --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>>'
 ```
 Simple scan using a hexadecimal string in the query. Please note, the hexadecimal query supports regular expressions.
 ```
-$ ./scanner --port 8545 --block-start 1 --block-end 1000 --query '<<0x21[0-9]{4}3131>>'
+$ ./evmap --port 8545 --block-start 1 --block-end 1000 --query '<<0x21[0-9]{4}3131>>'
 ```
 Scan with a function signature and a hexadecimal string. 
 ```
-$ ./scanner --port 8545 --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>> && ! <<0x21[0-9]{4}3131>>'
+$ ./evmap --port 8545 --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>> && ! <<0x21[0-9]{4}3131>>'
 ```
 Scan against a public provider instead of a local node.
 ```
-$ ./scanner --url https://mainnet.infura.io/v3/<key> --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>>'
+$ ./evmap --url https://mainnet.infura.io/v3/<key> --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>>'
 ```
 Slow down the scan to 2 seconds between blocks (default is 1000 ms), useful for rate-limited providers.
 ```
-$ ./scanner --url https://mainnet.infura.io/v3/<key> --block-start 1 --block-end 1000 --delay 2000 --query '<<transfer(address,uint256)>>'
+$ ./evmap --url https://mainnet.infura.io/v3/<key> --block-start 1 --block-end 1000 --delay 2000 --query '<<transfer(address,uint256)>>'
 ```
 Run a shell command on each match. `{field}` tokens are substituted with the match data; available tokens are `{blockNumber}`, `{transactionHash}`, `{contractAddress}`, `{ownerAddress}`, `{transactionNonce}`, `{transactionValue}`, `{contractBalance}`, `{transactionData}` and `{contractBytecode}`.
 ```
-$ ./scanner --port 8545 --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>>' --on-match 'echo {contractAddress} {blockNumber}'
+$ ./evmap --port 8545 --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>>' --on-match 'echo {contractAddress} {blockNumber}'
 ```
 Call a JavaScript module on each match. The module's default export receives the match object (same fields as the tokens above) and the live `ethers.providers.JsonRpcProvider` instance.
 ```
-$ ./scanner --port 8545 --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>>' --action-script ./my-action.js
+$ ./evmap --port 8545 --block-start 1 --block-end 1000 --query '<<transfer(address,uint256)>>' --action-script ./my-action.js
 ```
 ```js
 // my-action.js
@@ -130,11 +135,11 @@ module.exports = async function(match, provider) {
 ```
 Scan and display a summary.
 ```
-$ ./scanner --port 8545 --block-start 1 --block-end 1000 --output-file 'scan-output.json' --summary --query '<<transfer(address,uint256)>>'
+$ ./evmap --port 8545 --block-start 1 --block-end 1000 --output-file 'scan-output.json' --summary --query '<<transfer(address,uint256)>>'
 ```
 Example of a simple scan output.
 ```
-$ ./scanner --port 14545 --block-start 7264275 --block-end 7264290 --query '<<transfer(address,uint256)>>' --output-file './scan-outputs/scan-20190227-2318.json' --status --summary --search-creation
+$ ./evmap --port 14545 --block-start 7264275 --block-end 7264290 --query '<<transfer(address,uint256)>>' --output-file './scan-outputs/scan-20190227-2318.json' --status --summary --search-creation
 
 
 url                       http://localhost:14545
