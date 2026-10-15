@@ -1,14 +1,30 @@
 {
-  "name": "scanner",
+  "name": "evmap",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "EVM smart contract scanner: finds contract creations in a block range whose creation data or runtime bytecode match a function-signature / hex-pattern query",
+  "bin": {
+    "evmap": "./evmap",
+    "evmap-hex": "./evmap-hex"
+  },
   "scripts": {
     "test": "node test/rpc-utils-test.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "evm",
+    "ethereum",
+    "scanner",
+    "smart-contract",
+    "bytecode",
+    "solidity",
+    "function-selector",
+    "json-rpc"
+  ],
+  "author": "Andrei Dimitrief-Jianu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/djandrei/nodejs-ethereum-scanner.git"
+  },
   "dependencies": {
     "commander": "^2.19.0",
     "ethers": "^4.0.23",
