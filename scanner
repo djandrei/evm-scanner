@@ -403,7 +403,18 @@ async function main(commandLine)
 
                                 if (actionFn)
                                 {
-                                    actionFn(matchData, networkState.provider).catch(err => {
+                                    // Normalize so a synchronous throw or a non-promise return
+                                    // value is handled the same way as a rejected promise.
+                                    let actionResult;
+                                    try
+                                    {
+                                        actionResult = Promise.resolve(actionFn(matchData, networkState.provider));
+                                    }
+                                    catch (err)
+                                    {
+                                        actionResult = Promise.reject(err);
+                                    }
+                                    actionResult.catch(err => {
                                         console.error('action script error:', err.message);
                                     });
                                 }
