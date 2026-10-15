@@ -466,7 +466,7 @@ async function main(commandLine)
 }
 
 commander
-    .version('0.1.0')
+    .version(require('./package.json').version)
     .option('--url <url>', 'full JSON-RPC endpoint URL (overrides --client/--port)')
     .option('--delay <ms>', 'delay between block iterations in milliseconds (default: 1000)', parseInt)
     .option('--client <client>', 'ethereum client', 'localhost')
