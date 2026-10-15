@@ -36,6 +36,7 @@ const childProcess = require('child_process');
 
 const printUtils = require('./utils/print-utils.js');
 const statusUtils = require('./utils/status-utils.js');
+const rpcUtils = require('./utils/rpc-utils.js');
 
 const SearchParameters = require('./utils/search-parameters.js');
 const SearchUtils = require('./utils/search-utils.js');
@@ -226,7 +227,15 @@ async function main(commandLine)
 
     console.time('scan');
 
-    let networkState = await statusUtils.retrieveNetworkState(searchParameters.url)
+    let networkState = null;
+    try
+    {
+        networkState = await statusUtils.retrieveNetworkState(searchParameters.url);
+    }
+    catch (error)
+    {
+        throw new Error('cannot connect to ' + searchParameters.url + ': ' + rpcUtils.describeError(error));
+    }
     await statusUtils.printNetworkStatus(networkState);
 
     let startBlock = searchParameters.blockStart;
@@ -253,7 +262,9 @@ async function main(commandLine)
     for (let currentBlock = startBlock; currentBlock <= endBlock; currentBlock++)
     {
         await new Promise(resolve => setTimeout(resolve, searchParameters.delay));
-        let block = await networkState.provider.getBlock(currentBlock);
+        let block = await rpcUtils.withRetry(
+            'block ' + currentBlock + ' getBlock',
+            () => networkState.provider.getBlock(currentBlock));
 
         if (!block)
         {
@@ -275,7 +286,9 @@ async function main(commandLine)
                 for (let transactionIndex = 0; transactionIndex < transactionCount; transactionIndex++)
                 {
                     let transactionHash = block.transactions[transactionIndex];
-                    let transaction = await networkState.provider.getTransaction(transactionHash);
+                    let transaction = await rpcUtils.withRetry(
+                        'block ' + currentBlock + ' getTransaction(' + transactionHash + ')',
+                        () => networkState.provider.getTransaction(transactionHash));
                     
                     if (searchParameters.verbose)
                     {
@@ -285,7 +298,9 @@ async function main(commandLine)
     
                     if (!transaction.to)
                     {
-                        let transactionReceipt = await networkState.provider.getTransactionReceipt(transactionHash);
+                        let transactionReceipt = await rpcUtils.withRetry(
+                            'block ' + currentBlock + ' getTransactionReceipt(' + transactionHash + ')',
+                            () => networkState.provider.getTransactionReceipt(transactionHash));
     
                         let blockNumber = transactionReceipt.blockNumber;
                         let contractAddress = transactionReceipt.contractAddress;
@@ -294,8 +309,12 @@ async function main(commandLine)
                         let transactionValue = transaction.value;
                         let transactionData = transaction.data;
     
-                        let contractBalance = await networkState.provider.getBalance(contractAddress);
-                        let contractBytecode = await networkState.provider.getCode(contractAddress);
+                        let contractBalance = await rpcUtils.withRetry(
+                            'block ' + currentBlock + ' getBalance(' + contractAddress + ')',
+                            () => networkState.provider.getBalance(contractAddress));
+                        let contractBytecode = await rpcUtils.withRetry(
+                            'block ' + currentBlock + ' getCode(' + contractAddress + ')',
+                            () => networkState.provider.getCode(contractAddress));
 
                         if (!contractBalance.isZero() || !searchParameters.balance)
                         {
@@ -450,4 +469,21 @@ commander
     .option('--action-script <file>', 'JS module exporting async function onMatch(match, provider)')
     .parse(process.argv);
 
-main(commander);
+main(commander).catch((error) =>
+{
+    // Any failure that escapes main() (an RPC call that exhausted its retries,
+    // an unreachable endpoint, ...) ends the scan here with a one-line message
+    // instead of an unhandled-rejection stack trace. Matches already written
+    // to --output-file are kept; the message names the block to resume from.
+    printUtils.printNewLine();
+    printUtils.printError('scan aborted: ' + error.message);
+    if (commander.outputFile)
+    {
+        printUtils.printToConsole('matches found so far are in', 30, commander.outputFile);
+    }
+    if (commander.verbose)
+    {
+        console.error(error);
+    }
+    process.exitCode = 1;
+});
