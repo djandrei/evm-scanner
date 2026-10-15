@@ -57,7 +57,10 @@ Run the hex utility (generates function signatures/keccak256 hashes):
 ./hex --input 'transfer(address,uint256)' --signature   # 4-byte selector only
 ```
 
-There are no tests configured (`npm test` exits with an error).
+Run the tests (dependency-free, Node `assert` only; covers the RPC retry helper):
+```
+npm test
+```
 
 ## Architecture
 
@@ -87,6 +90,7 @@ scanner CLI
       provider.getBlock() → provider.getTransaction() → filter to contract creations (tx.to == null)
       → provider.getTransactionReceipt() for contractAddress
       → provider.getCode() / transaction.data for bytecode
+      (every provider call above goes through rpcUtils.withRetry())
       → searchUtils.foundMatch(bytecode)
       → print match + optionally append to JSON output file
       → optionally run --on-match shell command
@@ -103,6 +107,11 @@ scanner CLI
 | `status-utils.js` | Connects to the RPC node via URL, populates `NetworkState`, prints network/contract status; signer setup is optional and skipped gracefully for read-only public providers |
 | `contract-utils.js` | Thin wrappers around `ethers.js` for provider creation and contract deployment (used externally, not by scanner itself); `getProvider(url)` accepts any JSON-RPC URL |
 | `print-utils.js` | Columnar console output helpers |
+| `rpc-utils.js` | `withRetry(description, fn)` retries a provider call with exponential backoff (5 attempts, 1s base, 16s cap), logs each retry to stderr, and rethrows a wrapped error (original in `.cause`) after the last attempt; `describeError()` appends ethers v4's `responseText` to the message |
+
+### Error handling
+
+Transient RPC failures (rate limits, timeouts, dropped connections) are handled per call by `rpcUtils.withRetry()` in the block loop. When retries are exhausted, or the endpoint is unreachable at startup, the error propagates out of `main()` to the single `.catch` at the bottom of `scanner`, which prints `scan aborted: <reason>` (naming the failing block), the output file path if any, the full error under `--verbose`, and sets exit code 1. `process.exitCode` is used rather than `process.exit()` so pending `--on-match` child processes can finish. The retry policy is intentionally not configurable from the command line.
 
 ### Key dependencies
 

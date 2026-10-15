@@ -10,6 +10,21 @@ $ npm install
 
 The scanner connects to any Ethereum JSON-RPC endpoint: a local node via `--port` (and optionally `--client`), or a public provider such as Infura or Alchemy via `--url`.
 
+### Error handling
+
+Every RPC call made while scanning blocks is retried on failure, up to 5 attempts with exponential backoff (1s, 2s, 4s, 8s). Each retry is reported on stderr, for example:
+```
+rpc block 7264284 getBlock failed (attempt 1/5): invalid response - 429 (Too Many Requests); retrying in 1000 ms
+```
+If a call still fails after the last attempt the scan stops with `scan aborted: block <n> ...` and exit code 1. Matches already written to `--output-file` are kept; rerun with `--block-start <n>` to resume from the failed block. An endpoint that cannot be reached at startup is reported immediately without retries. `--verbose` additionally prints the full error.
+
+### Tests
+
+```
+$ npm test
+```
+Runs a dependency-free test of the RPC retry helper (`test/rpc-utils-test.js`).
+
 ### Known issues
 
 If using an ethereum client that does not run in full sync mode, there are some things you should be aware of:
