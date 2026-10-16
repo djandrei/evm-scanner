@@ -49,13 +49,14 @@ If a call still fails after the last attempt the scan stops with `scan aborted: 
 ```
 $ npm test
 ```
-Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of five files, run in sequence:
+Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of six files, run in sequence:
 
 - `test/rpc-utils-test.js` - the RPC retry helper: backoff delays, retry logging, the error raised after the last attempt.
 - `test/search-utils-test.js` - the query parser: signature hashing to 4-byte selectors, raw hex patterns, the `!`, `&&` and `||` operators, parentheses, and case-insensitive bytecode matching.
 - `test/evmap-cli-test.js` - the `evmap` command-line validation. It spawns the real executable and checks each usage error (message on stderr, exit code 1) and the parameter summary printed for valid command lines. Valid runs point at a closed local port, so nothing touches the network.
 - `test/evmap-hex-test.js` - the `evmap-hex` utility: full keccak256 hashes and 4-byte selectors of known signatures, hex-looking input hashed as text, and the missing `--input` usage error.
-- `test/on-match-test.js` - the `--on-match` command substitution. It runs `evmap` against a fake JSON-RPC server started inside the test, which serves one block with one contract creation, and checks that every `{field}` token expands to a single shell argument with the matched values, that unknown tokens expand to an empty argument, and that quoted values join adjacent literal text.
+- `test/on-match-test.js` - the `--on-match` command substitution. It runs `evmap` against the fake JSON-RPC server in `test/fake-rpc.js`, which serves one block with one contract creation, and checks that every `{field}` token expands to a single shell argument with the matched values, that unknown tokens expand to an empty argument, and that quoted values join adjacent literal text.
+- `test/output-file-test.js` - the `--output-file` JSON array, using the same fake server: a single match is written with all fields, a scan without matches leaves `[]`, an existing file is overwritten when the scan starts, matches from several blocks are appended, and the file is strict JSON.
 
 ### Known issues
 
