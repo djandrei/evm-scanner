@@ -125,6 +125,43 @@ function testBlockStartGreaterThanBlockEnd()
     assertValidationError(
         ['--port', '8545', '--block-start', '10', '--block-end', '9', '--query', '<<0xdead>>'],
         'block start cannot be greater than block end');
+    // an explicit end of 0 takes part in the range check like any other value
+    assertValidationError(
+        ['--port', '8545', '--block-start', '1', '--block-end', '0', '--query', '<<0xdead>>'],
+        'block start cannot be greater than block end');
+}
+
+function testBlockEndAloneDoesNotSatisfyBlockStart()
+{
+    assertValidationError(
+        ['--url', unreachableUrl, '--block-end', '5', '--query', '<<0xdead>>'],
+        'option \'--block-start <block>\' missing');
+}
+
+function testBlockStartWithLeadingZerosIsDecimal()
+{
+    let stdout = runValid(['--url', unreachableUrl, '--block-start', '007', '--block-end', '9', '--query', '<<0xdead>>']);
+
+    assert.ok(stdout.includes(parameterLine('block start', '7')));
+}
+
+function testValidationOrder()
+{
+    // connection options are checked first, then block start, block end,
+    // and only then the query, so a malformed block start is reported even
+    // when the query is missing too
+    assertValidationError(
+        ['--block-start', 'abc', '--query', '<<0xdead>>'],
+        'option \'--port <port>\' or \'--url <url>\' missing');
+    assertValidationError(
+        ['--url', unreachableUrl, '--block-start', 'abc'],
+        'option \'--block-start <block>\' must be a non-negative integer');
+    assertValidationError(
+        ['--url', unreachableUrl, '--block-start', '5', '--block-end', 'abc'],
+        'option \'--block-end <block>\' must be a non-negative integer');
+    assertValidationError(
+        ['--url', unreachableUrl, '--block-start', '5'],
+        'option \'--query <query>\' or \'--query-file <file>\' missing');
 }
 
 function testMissingQuery()
@@ -300,6 +337,9 @@ function main()
     testInvalidDelay();
     testMissingBlockStart();
     testBlockStartGreaterThanBlockEnd();
+    testBlockEndAloneDoesNotSatisfyBlockStart();
+    testBlockStartWithLeadingZerosIsDecimal();
+    testValidationOrder();
     testMissingQuery();
     testBothQueryAndQueryFile();
     testActionScriptNotFound();
