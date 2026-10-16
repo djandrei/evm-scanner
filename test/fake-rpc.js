@@ -73,8 +73,14 @@ const receipt = {
     status: '0x1'
 };
 
-function rpcResult(method, params)
+// `overrides` maps a method name to the result to return instead of the
+// fixture's, e.g. { eth_getBalance: '0x0' } for a contract with no balance
+function rpcResult(method, params, overrides)
 {
+    if (overrides && method in overrides)
+    {
+        return overrides[method];
+    }
     switch (method)
     {
         case 'net_version': return '1337';
@@ -89,7 +95,7 @@ function rpcResult(method, params)
     }
 }
 
-function startFakeRpcServer()
+function startFakeRpcServer(overrides)
 {
     return new Promise((resolve, reject) =>
     {
@@ -103,7 +109,7 @@ function startFakeRpcServer()
                 let reply = { jsonrpc: '2.0', id: call.id };
                 try
                 {
-                    reply.result = rpcResult(call.method, call.params);
+                    reply.result = rpcResult(call.method, call.params, overrides);
                 }
                 catch (error)
                 {
