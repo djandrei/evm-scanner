@@ -49,7 +49,7 @@ If a call still fails after the last attempt the scan stops with `scan aborted: 
 ```
 $ npm test
 ```
-Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of eleven files, run in sequence:
+Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of twelve files, run in sequence:
 
 - `test/rpc-utils-test.js` - the RPC retry helper: backoff delays, retry logging, the error raised after the last attempt.
 - `test/search-utils-test.js` - the query parser: signature hashing to 4-byte selectors, raw hex patterns, the `!`, `&&` and `||` operators, parentheses, and case-insensitive bytecode matching.
@@ -62,6 +62,7 @@ Runs the dependency-free test suite (Node `assert` only, no test framework). It 
 - `test/search-creation-test.js` - the `--search-creation` and `--search-runtime` options, using queries that can only match the fixture's creation data or only its runtime code: the default searches runtime only, `--search-creation` searches creation data only, both flags match either side and report a match on both sides once, and empty creation data or runtime code prints the "cannot retrieve" hint without matching.
 - `test/action-script-test.js` - the `--action-script` option, with small modules written to a temp directory: a sync function receives the match object, an async function receives the live provider, the function runs once per match and not at all without one, and a rejected promise or synchronous throw is reported as `action script error: ...` on stderr while the scan continues.
 - `test/status-test.js` - the `--status` option: one `current block` line per block, in order and ahead of that block's match report, none without the flag, and a block the provider does not return is printed as `invalid block` and skipped while the scan goes on.
+- `test/verbose-test.js` - the `--verbose` option: a dump of each transaction and receipt ahead of the match report, one per block, the `transaction data` and `contract bytecode` lines added to the match report, nothing extra without the flag, and the full error with stack on stderr when the scan aborts (one line without the flag).
 
 ### Known issues
 
