@@ -138,11 +138,12 @@ function testBlockEndAloneDoesNotSatisfyBlockStart()
         'option \'--block-start <block>\' missing');
 }
 
-function testBlockStartWithLeadingZerosIsDecimal()
+function testBlockNumbersWithLeadingZerosAreDecimal()
 {
-    let stdout = runValid(['--url', unreachableUrl, '--block-start', '007', '--block-end', '9', '--query', '<<0xdead>>']);
+    let stdout = runValid(['--url', unreachableUrl, '--block-start', '007', '--block-end', '010', '--query', '<<0xdead>>']);
 
     assert.ok(stdout.includes(parameterLine('block start', '7')));
+    assert.ok(stdout.includes(parameterLine('block end', '10')), '010 must be decimal 10, not octal 8');
 }
 
 function testValidationOrder()
@@ -338,7 +339,7 @@ function main()
     testMissingBlockStart();
     testBlockStartGreaterThanBlockEnd();
     testBlockEndAloneDoesNotSatisfyBlockStart();
-    testBlockStartWithLeadingZerosIsDecimal();
+    testBlockNumbersWithLeadingZerosAreDecimal();
     testValidationOrder();
     testMissingQuery();
     testBothQueryAndQueryFile();
