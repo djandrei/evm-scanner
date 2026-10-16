@@ -57,7 +57,7 @@ Run the evmap-hex utility (generates function signatures/keccak256 hashes):
 ./evmap-hex --input 'transfer(address,uint256)' --signature   # 4-byte selector only
 ```
 
-Run the tests (dependency-free, Node `assert` only; covers the RPC retry helper, the query parser, the `evmap` command-line validation, the `evmap-hex` utility, the `--on-match` substitution, the `--output-file` writing, the `--summary` output, the `--balance` filter, the `--search-creation` / `--search-runtime` selection, the `--action-script` option, the `--status` progress lines and the `--verbose` output; the last ten spawn the real executables, the CLI tests against a closed local port and the scan tests against the fake JSON-RPC server in `test/fake-rpc.js`, whose `startFakeRpcServer(overrides)` accepts per-method result overrides, each a value or a function of the call params):
+Run the tests (dependency-free, Node `assert` only; covers the RPC retry helper, the query parser, the `evmap` command-line validation, the `evmap-hex` utility, the `--on-match` substitution, the `--output-file` writing, the `--summary` output, the `--balance` filter, the `--search-creation` / `--search-runtime` selection, the `--action-script` option, the `--status` progress lines, the `--verbose` output and the `--query-file` option; the last eleven spawn the real executables, the CLI tests against a closed local port and the scan tests against the fake JSON-RPC server in `test/fake-rpc.js`, whose `startFakeRpcServer(overrides)` accepts per-method result overrides, each a value or a function of the call params):
 ```
 npm test
 ```
