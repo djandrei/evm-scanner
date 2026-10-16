@@ -89,7 +89,7 @@ function validateCommandLine(commandLine)
     let query = commandLine.query;
     if (!query)
     {
-        query = fileSystem.readFileSync(commandLine.queryFile, 'utf8').replace(/\n/g, '');
+        query = fileSystem.readFileSync(commandLine.queryFile, 'utf8').replace(/[\r\n]/g, '');
     }
 
     let searchCreation = false;

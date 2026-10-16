@@ -89,6 +89,23 @@ function testMultiLineQueryIsJoinedBeforeEvaluation(url)
     });
 }
 
+function testWindowsLineEndingsAreStripped(url)
+{
+    return withTempDirectory(async (directory) =>
+    {
+        // CRLF files must evaluate like LF files; a surviving '\r' would
+        // reach mathjs and abort the scan with a syntax error
+        let queryFile = writeQueryFile(directory, '<<0xbeef>>\r\n&&\r\n! <<0xcafe>>\r\n');
+
+        let result = await scanWithQueryFile(url, queryFile);
+
+        assertScanCompleted(result);
+        assert.ok(result.stdout.includes('query'.padEnd(26, ' ') + '<<0xbeef>>&&! <<0xcafe>>\n'), result.stdout);
+        assert.ok(!result.stdout.includes('\r'), result.stdout);
+        assert.strictEqual(countOccurrences(result.stdout, matchReport), 1, result.stdout);
+    });
+}
+
 async function testShippedExampleFileIsAValidQuery(url)
 {
     // template-input-signature is the example query file documented for
@@ -124,6 +141,7 @@ async function main()
         await testQueryFromFileFindsTheMatch(url);
         await testQueryFromFileCanRejectTheContract(url);
         await testMultiLineQueryIsJoinedBeforeEvaluation(url);
+        await testWindowsLineEndingsAreStripped(url);
         await testShippedExampleFileIsAValidQuery(url);
         await testMissingQueryFileAbortsBeforeTheScan(url);
         console.log('query-file tests passed');

@@ -63,7 +63,7 @@ Runs the dependency-free test suite (Node `assert` only, no test framework). It 
 - `test/action-script-test.js` - the `--action-script` option, with small modules written to a temp directory: a sync function receives the match object, an async function receives the live provider, the function runs once per match and not at all without one, and a rejected promise or synchronous throw is reported as `action script error: ...` on stderr while the scan continues.
 - `test/status-test.js` - the `--status` option: one `current block` line per block, in order and ahead of that block's match report, none without the flag, and a block the provider does not return is printed as `invalid block` and skipped while the scan goes on.
 - `test/verbose-test.js` - the `--verbose` option: a dump of each transaction and receipt ahead of the match report, one per block, the `transaction data` and `contract bytecode` lines added to the match report, nothing extra without the flag, and the full error with stack on stderr when the scan aborts (one line without the flag).
-- `test/query-file-test.js` - the `--query-file` option: a query read from a file finds or rejects the fixture, a query spread over several lines is joined into one expression, the shipped `template-input-signature` example parses, and a missing file aborts with exit code 1 before the scan starts.
+- `test/query-file-test.js` - the `--query-file` option: a query read from a file finds or rejects the fixture, a query spread over several lines is joined into one expression (with LF or CRLF line endings), the shipped `template-input-signature` example parses, and a missing file aborts with exit code 1 before the scan starts.
 
 ### Known issues
 
