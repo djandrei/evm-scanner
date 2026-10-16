@@ -56,29 +56,29 @@ function validateCommandLine(commandLine)
     if (!commandLine.port && !commandLine.url)
     {
         printUtils.printError('option \'--port <port>\' or \'--url <url>\' missing');
-        process.exit();
+        process.exit(1);
     }
 
     if (!commandLine.blockStart)
     {
         printUtils.printError('option \'--block-start <block>\' missing');
-        process.exit();
+        process.exit(1);
     }
     if (commandLine.blockStart > commandLine.blockEnd)
     {
         printUtils.printError('block start cannot be greater than block end');
-        process.exit();
+        process.exit(1);
     }
 
     if (!commandLine.query && !commandLine.queryFile)
     {
         printUtils.printError('option \'--query <query>\' or \'--query-file <file>\' missing');
-        process.exit();
+        process.exit(1);
     }
     if (commandLine.query && commandLine.queryFile)
     {
         printUtils.printError('both \'--query <query>\' or \'--query-file <file>\' specified');
-        process.exit();
+        process.exit(1);
     }
 
     if (!commandLine.searchCreation && !commandLine.searchRuntime)
@@ -131,7 +131,7 @@ function validateCommandLine(commandLine)
     if (commandLine.actionScript && !fileSystem.existsSync(commandLine.actionScript))
     {
         printUtils.printError('action script file not found: ' + commandLine.actionScript);
-        process.exit();
+        process.exit(1);
     }
 
     // set search parameters
@@ -221,7 +221,7 @@ async function main(commandLine)
         if (typeof actionFn !== 'function')
         {
             printUtils.printError('action script must export a function');
-            process.exit();
+            process.exit(1);
         }
     }
 

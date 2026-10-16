@@ -32,7 +32,7 @@ var printUtils =
 {
     printError: function(error)
     {
-        console.log(error);
+        console.error(error);
     },
 
     printToConsole: function(label, labelPadding, text)

@@ -39,7 +39,7 @@ function validateCommandLine(commandLine)
     if (!commandLine.input)
     {
         printUtils.printError('option \'--input <input>\' missing');
-        process.exit();
+        process.exit(1);
     }
 }
 

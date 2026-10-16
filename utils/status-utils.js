@@ -67,14 +67,14 @@ var statusUtils =
                 if (!deployerUnlocked)
                 {
                     printUtils.printToConsole('signer', 20, 'failed to unlock deployer');
-                    process.exit();
+                    process.exit(1);
                 }
 
                 let walletUnlocked = await walletSigner.unlock(password);
                 if (!walletUnlocked)
                 {
                     printUtils.printToConsole('signer', 20, 'failed to unlock wallet');
-                    process.exit();
+                    process.exit(1);
                 }
             }
 

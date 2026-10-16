@@ -42,7 +42,7 @@ Every RPC call made while scanning blocks is retried on failure, up to 5 attempt
 ```
 rpc block 7264284 getBlock failed (attempt 1/5): invalid response - 429 (Too Many Requests); retrying in 1000 ms
 ```
-If a call still fails after the last attempt the scan stops with `scan aborted: block <n> ...` and exit code 1. Matches already written to `--output-file` are kept; rerun with `--block-start <n>` to resume from the failed block. An endpoint that cannot be reached at startup is reported immediately without retries. `--verbose` additionally prints the full error.
+If a call still fails after the last attempt the scan stops with `scan aborted: block <n> ...` and exit code 1. Matches already written to `--output-file` are kept; rerun with `--block-start <n>` to resume from the failed block. An endpoint that cannot be reached at startup is reported immediately without retries. `--verbose` additionally prints the full error. Invalid command-line options are reported on stderr and exit with code 1 before any connection is made.
 
 ### Tests
 

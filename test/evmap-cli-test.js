@@ -5,10 +5,11 @@ const os = require('os');
 const path = require('path');
 
 // These tests spawn the real `evmap` executable and inspect what
-// validateCommandLine() prints. A valid command line goes on to try to
-// connect; pointing it at a closed local port makes that fail fast with
-// 'scan aborted: cannot connect ...', which doubles as proof that validation
-// passed. Nothing here touches the network.
+// validateCommandLine() prints. Errors go to stderr with exit code 1; the
+// parameter summary of a valid command line goes to stdout. A valid command
+// line goes on to try to connect; pointing it at a closed local port makes
+// that fail fast with 'scan aborted: cannot connect ...' on stderr, which
+// doubles as proof that validation passed. Nothing here touches the network.
 
 const evmapPath = path.join(__dirname, '..', 'evmap');
 const unreachableUrl = 'http://127.0.0.1:1';
@@ -28,15 +29,15 @@ function parameterLine(label, value)
 function assertValidationError(args, message)
 {
     let result = runEvmap(args);
-    assert.strictEqual(result.stdout, message + '\n', 'stdout for: ' + args.join(' '));
-    assert.strictEqual(result.stderr, '');
-    assert.strictEqual(result.status, 0);
+    assert.strictEqual(result.stderr, message + '\n', 'stderr for: ' + args.join(' '));
+    assert.strictEqual(result.stdout, '');
+    assert.strictEqual(result.status, 1);
 }
 
 function assertValidationPassed(result, args)
 {
-    assert.ok(result.stdout.includes('scan aborted: cannot connect to ' + unreachableUrl),
-        'expected validation to pass and the connect to fail for: ' + args.join(' ') + '\n' + result.stdout);
+    assert.ok(result.stderr.includes('scan aborted: cannot connect to ' + unreachableUrl),
+        'expected validation to pass and the connect to fail for: ' + args.join(' ') + '\n' + result.stdout + result.stderr);
     assert.strictEqual(result.status, 1);
 }
 
@@ -226,9 +227,8 @@ function testActionScriptMustExportFunction()
         '--action-script', 'package.json']);
 
     assert.ok(result.stdout.includes(parameterLine('action script', path.resolve('package.json'))));
-    assert.ok(result.stdout.endsWith('action script must export a function\n'), result.stdout);
-    assert.ok(!result.stdout.includes('scan aborted'));
-    assert.strictEqual(result.status, 0);
+    assert.strictEqual(result.stderr, 'action script must export a function\n');
+    assert.strictEqual(result.status, 1);
 }
 
 function main()

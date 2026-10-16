@@ -111,7 +111,7 @@ evmap CLI
 
 ### Error handling
 
-Transient RPC failures (rate limits, timeouts, dropped connections) are handled per call by `rpcUtils.withRetry()` in the block loop. When retries are exhausted, or the endpoint is unreachable at startup, the error propagates out of `main()` to the single `.catch` at the bottom of `evmap`, which prints `scan aborted: <reason>` (naming the failing block), the output file path if any, the full error under `--verbose`, and sets exit code 1. `process.exitCode` is used rather than `process.exit()` so pending `--on-match` child processes can finish. The retry policy is intentionally not configurable from the command line.
+Transient RPC failures (rate limits, timeouts, dropped connections) are handled per call by `rpcUtils.withRetry()` in the block loop. When retries are exhausted, or the endpoint is unreachable at startup, the error propagates out of `main()` to the single `.catch` at the bottom of `evmap`, which prints `scan aborted: <reason>` (naming the failing block), the output file path if any, the full error under `--verbose`, and sets exit code 1. `process.exitCode` is used rather than `process.exit()` so pending `--on-match` child processes can finish. Command-line validation errors in `evmap` (and a missing `--input` in `evmap-hex`) are printed to stderr through `printUtils.printError()` and exit with code 1 before any connection is made. The retry policy is intentionally not configurable from the command line.
 
 ### Key dependencies
 
