@@ -49,11 +49,12 @@ If a call still fails after the last attempt the scan stops with `scan aborted: 
 ```
 $ npm test
 ```
-Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of three files, run in sequence:
+Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of four files, run in sequence:
 
 - `test/rpc-utils-test.js` - the RPC retry helper: backoff delays, retry logging, the error raised after the last attempt.
 - `test/search-utils-test.js` - the query parser: signature hashing to 4-byte selectors, raw hex patterns, the `!`, `&&` and `||` operators, parentheses, and case-insensitive bytecode matching.
 - `test/evmap-cli-test.js` - the `evmap` command-line validation. It spawns the real executable and checks each usage error (message on stderr, exit code 1) and the parameter summary printed for valid command lines. Valid runs point at a closed local port, so nothing touches the network.
+- `test/evmap-hex-test.js` - the `evmap-hex` utility: full keccak256 hashes and 4-byte selectors of known signatures, hex-looking input hashed as text, and the missing `--input` usage error.
 
 ### Known issues
 
