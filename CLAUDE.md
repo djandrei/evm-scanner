@@ -57,7 +57,7 @@ Run the evmap-hex utility (generates function signatures/keccak256 hashes):
 ./evmap-hex --input 'transfer(address,uint256)' --signature   # 4-byte selector only
 ```
 
-Run the tests (dependency-free, Node `assert` only; covers the RPC retry helper, the query parser, the `evmap` command-line validation, and the `evmap-hex` utility; the last two spawn the real executables, `evmap` against a closed local port):
+Run the tests (dependency-free, Node `assert` only; covers the RPC retry helper, the query parser, the `evmap` command-line validation, the `evmap-hex` utility, and the `--on-match` substitution; the last three spawn the real executables, the CLI tests against a closed local port and the on-match test against a fake JSON-RPC server started inside the test):
 ```
 npm test
 ```
