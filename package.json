@@ -7,7 +7,7 @@
     "evmap-hex": "./evmap-hex"
   },
   "scripts": {
-    "test": "node test/rpc-utils-test.js && node test/search-utils-test.js && node test/evmap-cli-test.js && node test/evmap-hex-test.js && node test/on-match-test.js && node test/output-file-test.js"
+    "test": "node test/rpc-utils-test.js && node test/search-utils-test.js && node test/evmap-cli-test.js && node test/evmap-hex-test.js && node test/on-match-test.js && node test/output-file-test.js && node test/summary-test.js"
   },
   "keywords": [
     "evm",
