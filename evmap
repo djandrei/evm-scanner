@@ -53,6 +53,13 @@ function shellQuote(value)
 function validateCommandLine(commandLine)
 {
     // validate input parameters 
+    if (commandLine.port !== undefined
+        && !(Number.isInteger(commandLine.port) && commandLine.port >= 1 && commandLine.port <= 65535))
+    {
+        // --port is parsed with parseInt, so a non-number arrives here as NaN
+        printUtils.printError('option \'--port <port>\' must be a number between 1 and 65535');
+        process.exit(1);
+    }
     if (!commandLine.port && !commandLine.url)
     {
         printUtils.printError('option \'--port <port>\' or \'--url <url>\' missing');

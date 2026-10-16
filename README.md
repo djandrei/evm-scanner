@@ -53,7 +53,7 @@ Runs the dependency-free test suite (Node `assert` only, no test framework). It 
 
 - `test/rpc-utils-test.js` - the RPC retry helper: backoff delays, retry logging, the error raised after the last attempt.
 - `test/search-utils-test.js` - the query parser: signature hashing to 4-byte selectors, raw hex patterns, the `!`, `&&` and `||` operators, parentheses, and case-insensitive bytecode matching.
-- `test/evmap-cli-test.js` - the `evmap` command-line validation. It spawns the real executable and checks each usage error (message on stderr, exit code 1) and the parameter summary printed for valid command lines. Valid runs point at a closed local port, so nothing touches the network.
+- `test/evmap-cli-test.js` - the `evmap` command-line validation. It spawns the real executable and checks each usage error (message on stderr, exit code 1, including a non-numeric or out-of-range `--port`) and the parameter summary printed for valid command lines. Valid runs point at a closed local port, so nothing touches the network.
 - `test/evmap-hex-test.js` - the `evmap-hex` utility: full keccak256 hashes and 4-byte selectors of known signatures, hex-looking input hashed as text, and the missing `--input` usage error.
 - `test/on-match-test.js` - the `--on-match` command substitution. It runs `evmap` against the fake JSON-RPC server in `test/fake-rpc.js`, which serves one block with one contract creation, and checks that every `{field}` token expands to a single shell argument with the matched values, that unknown tokens expand to an empty argument, and that quoted values join adjacent literal text.
 - `test/output-file-test.js` - the `--output-file` JSON array, using the same fake server: a single match is written with all fields, a scan without matches leaves `[]`, an existing file is overwritten when the scan starts, matches from several blocks are appended, and the file is strict JSON.
@@ -66,7 +66,7 @@ Runs the dependency-free test suite (Node `assert` only, no test framework). It 
 - `test/query-file-test.js` - the `--query-file` option: a query read from a file finds or rejects the fixture, a query spread over several lines is joined into one expression (with LF or CRLF line endings), the shipped `template-input-signature` example parses, and a missing file aborts with exit code 1 before the scan starts.
 - `test/delay-test.js` - the `--delay` option, timed on the fake server side from when each block request arrives: every block waits at least the given delay, `--delay 0` does not wait, and the default is 1000 ms. This file takes a few seconds because of the real waits.
 - `test/block-end-test.js` - the `--block-end` default, against a fake server with a chosen head block that records which blocks are requested: an omitted end scans up to the head, an explicit end below or beyond the head is honored as given (blocks past the head are skipped as invalid), a start at the head scans one block, and a start past the head scans nothing.
-- `test/client-port-test.js` - the `--client` and `--port` options, proving the connection against fake servers: `--client`/`--port` connect, `--port` alone connects through the default `localhost`, `--url` wins over both, a closed port aborts the scan, and a non-numeric port is rejected.
+- `test/client-port-test.js` - the `--client` and `--port` options, proving the connection against fake servers: `--client`/`--port` connect, `--port` alone connects through the default `localhost`, `--url` wins over both, and a closed port aborts the scan.
 
 ### Known issues
 

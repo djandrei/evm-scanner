@@ -55,6 +55,16 @@ function testMissingPortAndUrl()
         'option \'--port <port>\' or \'--url <url>\' missing');
 }
 
+function testInvalidPort()
+{
+    let message = 'option \'--port <port>\' must be a number between 1 and 65535';
+    assertValidationError(['--port', 'abc', '--block-start', '1', '--query', '<<0xdead>>'], message);
+    assertValidationError(['--port', '0', '--block-start', '1', '--query', '<<0xdead>>'], message);
+    assertValidationError(['--port', '65536', '--block-start', '1', '--query', '<<0xdead>>'], message);
+    // an invalid --port is rejected even when --url would otherwise be used
+    assertValidationError(['--port', 'abc', '--url', unreachableUrl, '--block-start', '1', '--query', '<<0xdead>>'], message);
+}
+
 function testMissingBlockStart()
 {
     assertValidationError(
@@ -234,6 +244,7 @@ function testActionScriptMustExportFunction()
 function main()
 {
     testMissingPortAndUrl();
+    testInvalidPort();
     testMissingBlockStart();
     testBlockStartGreaterThanBlockEnd();
     testMissingQuery();

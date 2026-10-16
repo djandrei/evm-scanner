@@ -60,17 +60,6 @@ async function testClientAndPortToAClosedPortAbort()
     assert.strictEqual(countOccurrences(result.stdout, matchReport), 0, result.stdout);
 }
 
-async function testNonNumericPortIsRejected()
-{
-    // --port is parsed with parseInt, so a non-number becomes NaN and is
-    // treated as missing
-    let result = await scan(['--port', 'abc']);
-
-    assert.strictEqual(result.status, 1, result.stdout + result.stderr);
-    assert.strictEqual(result.stderr, 'option \'--port <port>\' or \'--url <url>\' missing\n');
-    assert.strictEqual(result.stdout, '');
-}
-
 async function main()
 {
     let server = await startFakeRpcServer();
@@ -81,7 +70,6 @@ async function main()
         await testPortAloneUsesLocalhost(localhostServer);
         await testUrlTakesPrecedenceOverClientAndPort(server);
         await testClientAndPortToAClosedPortAbort();
-        await testNonNumericPortIsRejected();
         console.log('client-port tests passed');
     }
     finally
