@@ -139,4 +139,6 @@ function runEvmap(args)
     });
 }
 
-module.exports = { match, startFakeRpcServer, runEvmap };
+// `transaction` is exported so tests can override eth_getTransactionByHash
+// with a variant of it
+module.exports = { match, transaction, startFakeRpcServer, runEvmap };
