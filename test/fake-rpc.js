@@ -74,12 +74,15 @@ const receipt = {
 };
 
 // `overrides` maps a method name to the result to return instead of the
-// fixture's, e.g. { eth_getBalance: '0x0' } for a contract with no balance
+// fixture's, e.g. { eth_getBalance: '0x0' } for a contract with no balance.
+// An override may be a function of the call's params, for results that
+// depend on the request, e.g. a block that is missing for one number only.
 function rpcResult(method, params, overrides)
 {
     if (overrides && method in overrides)
     {
-        return overrides[method];
+        let override = overrides[method];
+        return typeof override === 'function' ? override(params) : override;
     }
     switch (method)
     {
@@ -139,6 +142,6 @@ function runEvmap(args)
     });
 }
 
-// `transaction` is exported so tests can override eth_getTransactionByHash
-// with a variant of it
-module.exports = { match, transaction, startFakeRpcServer, runEvmap };
+// `block` and `transaction` are exported so tests can override
+// eth_getBlockByNumber / eth_getTransactionByHash with variants of them
+module.exports = { match, block, transaction, startFakeRpcServer, runEvmap };
