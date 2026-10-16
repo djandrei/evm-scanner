@@ -98,8 +98,11 @@ function rpcResult(method, params, overrides)
     }
 }
 
-function startFakeRpcServer(overrides)
+// `host` is the address to bind; it defaults to 127.0.0.1 and is also used
+// in the returned URL, so 'localhost' gives http://localhost:<port>
+function startFakeRpcServer(overrides, host)
 {
+    host = host || '127.0.0.1';
     return new Promise((resolve, reject) =>
     {
         let server = http.createServer((request, response) =>
@@ -123,9 +126,9 @@ function startFakeRpcServer(overrides)
             });
         });
         server.on('error', reject);
-        server.listen(0, '127.0.0.1', () =>
+        server.listen(0, host, () =>
         {
-            resolve({ server: server, url: 'http://127.0.0.1:' + server.address().port });
+            resolve({ server: server, url: 'http://' + host + ':' + server.address().port, port: server.address().port });
         });
     });
 }

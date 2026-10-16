@@ -49,7 +49,7 @@ If a call still fails after the last attempt the scan stops with `scan aborted: 
 ```
 $ npm test
 ```
-Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of fifteen files, run in sequence:
+Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of sixteen files, run in sequence:
 
 - `test/rpc-utils-test.js` - the RPC retry helper: backoff delays, retry logging, the error raised after the last attempt.
 - `test/search-utils-test.js` - the query parser: signature hashing to 4-byte selectors, raw hex patterns, the `!`, `&&` and `||` operators, parentheses, and case-insensitive bytecode matching.
@@ -66,6 +66,7 @@ Runs the dependency-free test suite (Node `assert` only, no test framework). It 
 - `test/query-file-test.js` - the `--query-file` option: a query read from a file finds or rejects the fixture, a query spread over several lines is joined into one expression (with LF or CRLF line endings), the shipped `template-input-signature` example parses, and a missing file aborts with exit code 1 before the scan starts.
 - `test/delay-test.js` - the `--delay` option, timed on the fake server side from when each block request arrives: every block waits at least the given delay, `--delay 0` does not wait, and the default is 1000 ms. This file takes a few seconds because of the real waits.
 - `test/block-end-test.js` - the `--block-end` default, against a fake server with a chosen head block that records which blocks are requested: an omitted end scans up to the head, an explicit end below or beyond the head is honored as given (blocks past the head are skipped as invalid), a start at the head scans one block, and a start past the head scans nothing.
+- `test/client-port-test.js` - the `--client` and `--port` options, proving the connection against fake servers: `--client`/`--port` connect, `--port` alone connects through the default `localhost`, `--url` wins over both, a closed port aborts the scan, and a non-numeric port is rejected.
 
 ### Known issues
 
