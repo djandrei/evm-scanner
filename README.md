@@ -49,7 +49,7 @@ If a call still fails after the last attempt the scan stops with `scan aborted: 
 ```
 $ npm test
 ```
-Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of nine files, run in sequence:
+Runs the dependency-free test suite (Node `assert` only, no test framework). It consists of ten files, run in sequence:
 
 - `test/rpc-utils-test.js` - the RPC retry helper: backoff delays, retry logging, the error raised after the last attempt.
 - `test/search-utils-test.js` - the query parser: signature hashing to 4-byte selectors, raw hex patterns, the `!`, `&&` and `||` operators, parentheses, and case-insensitive bytecode matching.
@@ -60,6 +60,7 @@ Runs the dependency-free test suite (Node `assert` only, no test framework). It 
 - `test/summary-test.js` - the `--summary` block printed at the end of the scan, using the same fake server: one entry per match read back from the output file, the no-match message, the explanation printed when `--summary` is given without `--output-file`, and no summary without the flag.
 - `test/balance-test.js` - the `--balance` filter, using the fake server once with its default balance and once overridden to report zero: a zero-balance contract is reported without the flag, dropped with it (no match report, no output file entry, no `--on-match` run), and a non-zero balance still passes the filter.
 - `test/search-creation-test.js` - the `--search-creation` and `--search-runtime` options, using queries that can only match the fixture's creation data or only its runtime code: the default searches runtime only, `--search-creation` searches creation data only, both flags match either side and report a match on both sides once, and empty creation data or runtime code prints the "cannot retrieve" hint without matching.
+- `test/action-script-test.js` - the `--action-script` option, with small modules written to a temp directory: a sync function receives the match object, an async function receives the live provider, the function runs once per match and not at all without one, and a rejected promise or synchronous throw is reported as `action script error: ...` on stderr while the scan continues.
 
 ### Known issues
 
