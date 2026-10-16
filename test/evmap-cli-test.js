@@ -55,14 +55,62 @@ function testMissingPortAndUrl()
         'option \'--port <port>\' or \'--url <url>\' missing');
 }
 
+// values the strict numeric parser must reject: parseInt() would have taken
+// '12abc' as 12, '1e3' as 1, '1.9' as 1 and '0x10' as 16, and 'abc' as NaN
+const malformedNumbers = ['abc', '-5', '1.9', '12abc', '1e3', '0x10', ''];
+
 function testInvalidPort()
 {
     let message = 'option \'--port <port>\' must be a number between 1 and 65535';
-    assertValidationError(['--port', 'abc', '--block-start', '1', '--query', '<<0xdead>>'], message);
+    malformedNumbers.forEach((value) =>
+    {
+        assertValidationError(['--port', value, '--block-start', '1', '--query', '<<0xdead>>'], message);
+    });
     assertValidationError(['--port', '0', '--block-start', '1', '--query', '<<0xdead>>'], message);
     assertValidationError(['--port', '65536', '--block-start', '1', '--query', '<<0xdead>>'], message);
     // an invalid --port is rejected even when --url would otherwise be used
     assertValidationError(['--port', 'abc', '--url', unreachableUrl, '--block-start', '1', '--query', '<<0xdead>>'], message);
+}
+
+function testInvalidBlockStart()
+{
+    let message = 'option \'--block-start <block>\' must be a non-negative integer';
+    malformedNumbers.forEach((value) =>
+    {
+        assertValidationError(['--url', unreachableUrl, '--block-start', value, '--query', '<<0xdead>>'], message);
+    });
+}
+
+function testBlockZeroIsAValidBlockStart()
+{
+    let stdout = runValid(['--url', unreachableUrl, '--block-start', '0', '--query', '<<0xdead>>']);
+
+    assert.ok(stdout.includes(parameterLine('block start', '0')));
+}
+
+function testInvalidBlockEnd()
+{
+    let message = 'option \'--block-end <block>\' must be a non-negative integer';
+    malformedNumbers.forEach((value) =>
+    {
+        assertValidationError(['--url', unreachableUrl, '--block-start', '1', '--block-end', value, '--query', '<<0xdead>>'], message);
+    });
+}
+
+function testBlockZeroIsAValidBlockEnd()
+{
+    let stdout = runValid(['--url', unreachableUrl, '--block-start', '0', '--block-end', '0', '--query', '<<0xdead>>']);
+
+    assert.ok(stdout.includes(parameterLine('block end', '0')), 'block end 0 must be printed, not treated as omitted');
+}
+
+function testInvalidDelay()
+{
+    let message = 'option \'--delay <ms>\' must be a non-negative integer';
+    malformedNumbers.forEach((value) =>
+    {
+        assertValidationError(['--url', unreachableUrl, '--block-start', '1', '--delay', value, '--query', '<<0xdead>>'], message);
+    });
 }
 
 function testMissingBlockStart()
@@ -245,6 +293,11 @@ function main()
 {
     testMissingPortAndUrl();
     testInvalidPort();
+    testInvalidBlockStart();
+    testBlockZeroIsAValidBlockStart();
+    testInvalidBlockEnd();
+    testBlockZeroIsAValidBlockEnd();
+    testInvalidDelay();
     testMissingBlockStart();
     testBlockStartGreaterThanBlockEnd();
     testMissingQuery();

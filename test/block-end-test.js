@@ -117,6 +117,17 @@ async function testStartBeyondTheHeadScansNothing(url)
     assert.strictEqual(countOccurrences(stdout, matchReport), 0, stdout);
 }
 
+async function testBlockEndZeroIsNotTreatedAsOmitted(url)
+{
+    // 0 is the genesis block; an explicit --block-end 0 must not fall back
+    // to the head block
+    let stdout = await scan(url, 0, ['--block-end', '0']);
+
+    assert.ok(stdout.includes(scanLine('end block', 0)), stdout);
+    assert.deepStrictEqual(blockRequests, ['latest', hex(0)]);
+    assert.strictEqual(countOccurrences(stdout, matchReport), 1, stdout);
+}
+
 async function main()
 {
     let { server, url } = await startServerWithHead(7);
@@ -127,6 +138,7 @@ async function main()
         await testExplicitBlockEndBeyondTheHeadIsNotClamped(url);
         await testStartAtTheHeadScansOneBlock(url);
         await testStartBeyondTheHeadScansNothing(url);
+        await testBlockEndZeroIsNotTreatedAsOmitted(url);
         console.log('block-end tests passed');
     }
     finally

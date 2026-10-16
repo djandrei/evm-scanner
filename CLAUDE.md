@@ -51,6 +51,8 @@ Other scanner options:
 - `--verbose` — print full transaction/receipt/bytecode data during the scan.
 - `--summary` — print a summary of all matches at the end (requires `--output-file`).
 
+The numeric options (`--port`, `--block-start`, `--block-end`, `--delay`) accept only all-digit values; `parseUnsignedInteger()` in `evmap` turns anything else into `NaN`, which `validateCommandLine()` reports as an invalid value (exit code 1). Block `0` and `--delay 0` are valid; `--port` must be between 1 and 65535.
+
 Run the evmap-hex utility (generates function signatures/keccak256 hashes):
 ```
 ./evmap-hex --input 'transfer(address,uint256)'

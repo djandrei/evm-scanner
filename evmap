@@ -50,25 +50,47 @@ function shellQuote(value)
     return "'" + value.replace(/'/g, "'\\''") + "'";
 }
 
+// Strict parser for the numeric command-line options. parseInt() would take
+// '12abc' as 12, '1e3' as 1 and '0x10' as 16, and turns 'abc' into NaN that
+// the truthiness checks below mistake for a missing option. Only an all-digit
+// string is accepted; anything else becomes NaN and is rejected explicitly.
+function parseUnsignedInteger(value)
+{
+    return /^\d+$/.test(value) ? Number(value) : NaN;
+}
+
+function isGivenButInvalid(value)
+{
+    return value !== undefined && Number.isNaN(value);
+}
+
 function validateCommandLine(commandLine)
 {
     // validate input parameters 
-    if (commandLine.port !== undefined
-        && !(Number.isInteger(commandLine.port) && commandLine.port >= 1 && commandLine.port <= 65535))
+    if (isGivenButInvalid(commandLine.port) || (commandLine.port !== undefined && (commandLine.port < 1 || commandLine.port > 65535)))
     {
-        // --port is parsed with parseInt, so a non-number arrives here as NaN
         printUtils.printError('option \'--port <port>\' must be a number between 1 and 65535');
         process.exit(1);
     }
-    if (!commandLine.port && !commandLine.url)
+    if (commandLine.port === undefined && !commandLine.url)
     {
         printUtils.printError('option \'--port <port>\' or \'--url <url>\' missing');
         process.exit(1);
     }
 
-    if (!commandLine.blockStart)
+    if (isGivenButInvalid(commandLine.blockStart))
+    {
+        printUtils.printError('option \'--block-start <block>\' must be a non-negative integer');
+        process.exit(1);
+    }
+    if (commandLine.blockStart === undefined)
     {
         printUtils.printError('option \'--block-start <block>\' missing');
+        process.exit(1);
+    }
+    if (isGivenButInvalid(commandLine.blockEnd))
+    {
+        printUtils.printError('option \'--block-end <block>\' must be a non-negative integer');
         process.exit(1);
     }
     if (commandLine.blockStart > commandLine.blockEnd)
@@ -85,6 +107,12 @@ function validateCommandLine(commandLine)
     if (commandLine.query && commandLine.queryFile)
     {
         printUtils.printError('both \'--query <query>\' or \'--query-file <file>\' specified');
+        process.exit(1);
+    }
+
+    if (isGivenButInvalid(commandLine.delay))
+    {
+        printUtils.printError('option \'--delay <ms>\' must be a non-negative integer');
         process.exit(1);
     }
 
@@ -174,7 +202,7 @@ function validateCommandLine(commandLine)
     printUtils.printToConsole('delay (ms)', 26, searchParameters.delay);
     
     printUtils.printToConsole('block start', 26, searchParameters.blockStart);
-    if (searchParameters.blockEnd)
+    if (searchParameters.blockEnd !== undefined)
     {
         printUtils.printToConsole('block end', 26, searchParameters.blockEnd);
     }
@@ -247,7 +275,7 @@ async function main(commandLine)
 
     let startBlock = searchParameters.blockStart;
     let endBlock = searchParameters.blockEnd;
-    if (!searchParameters.blockEnd)
+    if (searchParameters.blockEnd === undefined)
     {
         endBlock = networkState.blockNumber;
     }
@@ -475,11 +503,11 @@ async function main(commandLine)
 commander
     .version(require('./package.json').version)
     .option('--url <url>', 'full JSON-RPC endpoint URL (overrides --client/--port)')
-    .option('--delay <ms>', 'delay between block iterations in milliseconds (default: 1000)', parseInt)
+    .option('--delay <ms>', 'delay between block iterations in milliseconds (default: 1000)', parseUnsignedInteger)
     .option('--client <client>', 'ethereum client', 'localhost')
-    .option('--port <port>', 'ethereum client rpc port', parseInt)
-    .option('--block-start <block>', 'block number scan start', parseInt)
-    .option('--block-end <block>', 'block number scan end', parseInt)
+    .option('--port <port>', 'ethereum client rpc port', parseUnsignedInteger)
+    .option('--block-start <block>', 'block number scan start', parseUnsignedInteger)
+    .option('--block-end <block>', 'block number scan end', parseUnsignedInteger)
     .option('--query <query>', 'query to execute')
     .option('--query-file <file>', 'file with query to execute')
     .option('--search-creation', 'search the data on the creation transaction')
