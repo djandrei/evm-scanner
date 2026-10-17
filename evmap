@@ -116,6 +116,26 @@ function validateCommandLine(commandLine)
         process.exit(1);
     }
 
+    if (commandLine.outputFile !== undefined)
+    {
+        if (commandLine.outputFile === '')
+        {
+            printUtils.printError('option \'--output-file <file>\' must not be empty');
+            process.exit(1);
+        }
+        // the output file is created here, holding an empty array, so a path
+        // that cannot be written is reported before any connection is made
+        try
+        {
+            fileSystem.writeFileSync(commandLine.outputFile, JSON.stringify([]));
+        }
+        catch (error)
+        {
+            printUtils.printError('option \'--output-file <file>\' cannot be written: ' + error.message);
+            process.exit(1);
+        }
+    }
+
     if (!commandLine.searchCreation && !commandLine.searchRuntime)
     {
         commandLine.searchRuntime = true;
@@ -286,13 +306,6 @@ async function main(commandLine)
     printUtils.printToConsole('query', 20, searchUtils.query);
     printUtils.printToConsole('hexaized query', 20, searchUtils.hexaizedQuery);
     printUtils.printNewLine();
-
-    if (searchParameters.outputFile)
-    {
-        fileSystem.writeFileSync(
-            searchParameters.outputFile, 
-            JSON.stringify([]));
-    }
 
     for (let currentBlock = startBlock; currentBlock <= endBlock; currentBlock++)
     {

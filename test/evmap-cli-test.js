@@ -41,6 +41,19 @@ function assertValidationPassed(result, args)
     assert.strictEqual(result.status, 1);
 }
 
+function withTempDirectory(fn)
+{
+    let directory = fileSystem.mkdtempSync(path.join(os.tmpdir(), 'evmap-test-'));
+    try
+    {
+        fn(directory);
+    }
+    finally
+    {
+        fileSystem.rmSync(directory, { recursive: true, force: true });
+    }
+}
+
 function runValid(args)
 {
     let result = runEvmap(args);
@@ -149,8 +162,8 @@ function testBlockNumbersWithLeadingZerosAreDecimal()
 function testValidationOrder()
 {
     // connection options are checked first, then block start, block end,
-    // and only then the query, so a malformed block start is reported even
-    // when the query is missing too
+    // the query, the delay and only then the output file, so a malformed
+    // block start is reported even when the query is missing too
     assertValidationError(
         ['--block-start', 'abc', '--query', '<<0xdead>>'],
         'option \'--port <port>\' or \'--url <url>\' missing');
@@ -163,6 +176,9 @@ function testValidationOrder()
     assertValidationError(
         ['--url', unreachableUrl, '--block-start', '5'],
         'option \'--query <query>\' or \'--query-file <file>\' missing');
+    assertValidationError(
+        ['--url', unreachableUrl, '--block-start', '5', '--query', '<<0xdead>>', '--delay', 'abc', '--output-file', ''],
+        'option \'--delay <ms>\' must be a non-negative integer');
 }
 
 function testMissingQuery()
@@ -285,19 +301,20 @@ function testOptionalFlagsAndFilesArePrinted()
 {
     let directory = fileSystem.mkdtempSync(path.join(os.tmpdir(), 'evmap-test-'));
     let actionScript = path.join(directory, 'action.js');
+    let outputFile = path.join(directory, 'matches.json');
     fileSystem.writeFileSync(actionScript, 'module.exports = function() {};\n');
     try
     {
         let stdout = runValid(['--url', unreachableUrl, '--block-start', '5', '--query', '<<0xdead>>',
             '--balance', '--status', '--verbose', '--summary',
-            '--output-file', 'matches.json',
+            '--output-file', outputFile,
             '--on-match', 'echo {contractAddress}',
             '--action-script', actionScript]);
 
         assert.ok(stdout.includes('only contracts with non-zero balance'));
         assert.ok(stdout.includes('displays status during scan'));
         assert.ok(stdout.includes('displays summary at the end of the scan'));
-        assert.ok(stdout.includes(parameterLine('output file', 'matches.json')));
+        assert.ok(stdout.includes(parameterLine('output file', outputFile)));
         assert.ok(stdout.includes(parameterLine('on-match command', 'echo {contractAddress}')));
         assert.ok(stdout.includes(parameterLine('action script', path.resolve(actionScript))));
     }
@@ -305,6 +322,58 @@ function testOptionalFlagsAndFilesArePrinted()
     {
         fileSystem.rmSync(directory, { recursive: true, force: true });
     }
+}
+
+function testOutputFileWithoutValue()
+{
+    // commander itself rejects an option that takes a value and gets none
+    assertValidationError(
+        ['--url', unreachableUrl, '--block-start', '5', '--query', '<<0xdead>>', '--output-file'],
+        'error: option `--output-file <file>\' argument missing');
+}
+
+function testEmptyOutputFile()
+{
+    assertValidationError(
+        ['--url', unreachableUrl, '--block-start', '5', '--query', '<<0xdead>>', '--output-file', ''],
+        'option \'--output-file <file>\' must not be empty');
+}
+
+function testUnwritableOutputFile()
+{
+    withTempDirectory((directory) =>
+    {
+        let message = 'option \'--output-file <file>\' cannot be written: ';
+
+        let fileInMissingDirectory = path.join(directory, 'missing', 'matches.json');
+        assertValidationError(
+            ['--url', unreachableUrl, '--block-start', '5', '--query', '<<0xdead>>', '--output-file', fileInMissingDirectory],
+            message + 'ENOENT: no such file or directory, open \'' + fileInMissingDirectory + '\'');
+        assert.ok(!fileSystem.existsSync(fileInMissingDirectory), 'the file must not be created');
+
+        assertValidationError(
+            ['--url', unreachableUrl, '--block-start', '5', '--query', '<<0xdead>>', '--output-file', directory],
+            message + 'EISDIR: illegal operation on a directory, open \'' + directory + '\'');
+        assert.ok(fileSystem.statSync(directory).isDirectory(), 'the directory must be left alone');
+    });
+}
+
+function testOutputFileIsCreatedBeforeConnecting()
+{
+    withTempDirectory((directory) =>
+    {
+        let outputFile = path.join(directory, 'matches.json');
+        fileSystem.writeFileSync(outputFile, '[{"stale":true}]');
+        let args = ['--url', unreachableUrl, '--block-start', '5', '--query', '<<0xdead>>', '--output-file', outputFile];
+
+        let result = runEvmap(args);
+
+        assertValidationPassed(result, args);
+        // validation has already replaced the stale content with an empty
+        // array, so the abort message points at a file that exists
+        assert.strictEqual(fileSystem.readFileSync(outputFile, 'utf8'), '[]');
+        assert.ok(result.stdout.includes('matches found so far are in'.padEnd(30, ' ') + outputFile + '\n'), result.stdout);
+    });
 }
 
 function testRelativeActionScriptIsResolved()
@@ -354,6 +423,10 @@ function main()
     testSearchCreationAndRuntime();
     testQueryFileIsReadAndNewlinesStripped();
     testOptionalFlagsAndFilesArePrinted();
+    testOutputFileWithoutValue();
+    testEmptyOutputFile();
+    testUnwritableOutputFile();
+    testOutputFileIsCreatedBeforeConnecting();
     testRelativeActionScriptIsResolved();
     testActionScriptMustExportFunction();
     console.log('evmap cli tests passed');
